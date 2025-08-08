@@ -67,6 +67,12 @@
     .hidden {
       display: none;
     }
+    .grade-header {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
   </style>
 </head>
 <body>
@@ -76,7 +82,7 @@
     <div id="suggestions" class="suggestions hidden"></div>
   </div>
   <div id="data-container" class="hidden">
-    <!-- Grade-level tables will be dynamically populated here -->
+    <!-- Data for each grade level will be dynamically populated here -->
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -84,6 +90,8 @@
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXpGjabsmyLM0yQPC7LuxHQDWIKEX1PEN0OS6chnSx0RD7qosCEenIpOKfMUHGwKwxIO-DSKVq2MW-/pub?output=csv';
 
     let pupilsData = [];
+    const gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
+    const subjects = ['Subject 1', 'Subject 2', 'Subject 3', 'Subject 4', 'Subject 5'];
 
     async function fetchData() {
       try {
@@ -106,6 +114,7 @@
         console.log('Parsed Data:', pupilsData);
       } catch (error) {
         console.error('Error fetching ', error);
+        document.getElementById('data-container').innerHTML = `<div>${error.message}</div>`;
       }
     }
 
@@ -113,58 +122,59 @@
       const container = document.getElementById('data-container');
       container.innerHTML = ''; // Clear existing content
 
-      // Define grade levels and their corresponding subjects
-      const gradeLevels = [
-        { level: 'Kinder', startIdx: 5 },
-        { level: 'Grade 1', startIdx: 11 },
-        { level: 'Grade 2', startIdx: 17 },
-        { level: 'Grade 3', startIdx: 23 }, // Adjusted based on your header structure
-        { level: 'Grade 4', startIdx: 29 },
-        { level: 'Grade 5', startIdx: 35 },
-        { level: 'Grade 6', startIdx: 41 }
-      ];
+      // General Information Table
+      const generalTable = document.createElement('table');
+      generalTable.classList.add('grade-table');
+      const generalBody = document.createElement('tbody');
+      generalTable.appendChild(generalBody);
 
-      gradeLevels.forEach(({ level, startIdx }) => {
+      const generalFields = ['Name', 'LRN', 'Birth Day', 'Current Height', 'Current Weight'];
+      generalFields.forEach(field => {
+        const tr = document.createElement('tr');
+        const th = document.createElement('th');
+        th.textContent = field;
+        const td = document.createElement('td');
+        td.textContent = row[field] || 'N/A';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        generalBody.appendChild(tr);
+      });
+
+      container.appendChild(generalTable);
+
+      // Grade Level Tables
+      gradeLevels.forEach(grade => {
+        const header = document.createElement('div');
+        header.classList.add('grade-header');
+        header.textContent = grade;
+        container.appendChild(header);
+
         const table = document.createElement('table');
         table.classList.add('grade-table');
-
-        // Table headers
         const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+        table.appendChild(thead);
+        table.appendChild(tbody);
+
+        // Add headers
         const headerRow = document.createElement('tr');
-        const headers = ['Subject', '1st Quarter', '2nd Quarter', '3rd Quarter', '4th Quarter', 'Final Grade'];
-        headers.forEach(header => {
+        subjects.forEach(subject => {
           const th = document.createElement('th');
-          th.textContent = header;
+          th.textContent = subject;
           headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
-        table.appendChild(thead);
 
-        // Table body
-        const tbody = document.createElement('tbody');
-        for (let i = 0; i < 5; i++) { // 5 subjects per grade level
-          const subjectName = Object.keys(row)[startIdx + i];
-          const grades = row[subjectName].split(',').map(grade => grade.trim() || 'N/A');
+        // Add data rows
+        const dataRow = document.createElement('tr');
+        subjects.forEach(subject => {
+          const td = document.createElement('td');
+          const subjectKey = `${grade} ${subject}`;
+          td.textContent = row[subjectKey] || 'N/A';
+          dataRow.appendChild(td);
+        });
+        tbody.appendChild(dataRow);
 
-          const tr = document.createElement('tr');
-          const subjectCell = document.createElement('td');
-          subjectCell.textContent = subjectName || 'N/A';
-          tr.appendChild(subjectCell);
-
-          grades.forEach(grade => {
-            const td = document.createElement('td');
-            td.textContent = grade;
-            tr.appendChild(td);
-          });
-
-          tbody.appendChild(tr);
-        }
-        table.appendChild(tbody);
-
-        // Add a title for the grade level
-        const title = document.createElement('h3');
-        title.textContent = level;
-        container.appendChild(title);
         container.appendChild(table);
       });
 

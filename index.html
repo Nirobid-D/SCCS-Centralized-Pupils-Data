@@ -3,16 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Google Sheet Data</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #f4f4f4; }<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sta Catalina Central School - Pupils Data</title>
   <style>
     body {
@@ -55,27 +45,25 @@
     .suggestions div:hover {
       background-color: #f0f0f0;
     }
-    table {
-      width: 100%;
+    .portrait-table {
+      margin: 20px auto;
+      max-width: 600px;
       border-collapse: collapse;
-      margin-top: 20px;
       background: #fff;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    th, td {
+    .portrait-table th, .portrait-table td {
       border: 1px solid #ddd;
       padding: 12px;
       text-align: left;
     }
-    th {
+    .portrait-table th {
       background-color: #2c3e50;
       color: #fff;
+      width: 40%;
     }
-    tr:nth-child(even) {
+    .portrait-table tr:nth-child(even) {
       background-color: #f2f2f2;
-    }
-    tr:hover {
-      background-color: #e0e0e0;
     }
     .hidden {
       display: none;
@@ -88,19 +76,11 @@
     <input type="text" id="searchInput" placeholder="Search by Name or LRN..." />
     <div id="suggestions" class="suggestions hidden"></div>
   </div>
-  <table id="data-table">
+  <table id="data-table" class="portrait-table hidden">
     <thead>
       <tr>
-        <th>Name</th>
-        <th>LRN</th>
-        <th>Birth Day</th>
-        <th>Current Height</th>
-        <th>Current Weight</th>
-        <th>Subject 1</th>
-        <th>Subject 2</th>
-        <th>Subject 3</th>
-        <th>Subject 4</th>
-        <th>Subject 5</th>
+        <th>Field</th>
+        <th>Value</th>
       </tr>
     </thead>
     <tbody id="table-body">
@@ -112,6 +92,7 @@
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXpGjabsmyLM0yQPC7LuxHQDWIKEX1PEN0OS6chnSx0RD7qosCEenIpOKfMUHGwKwxIO-DSKVq2MW-/pub?output=csv';
 
     let pupilsData = [];
+    const headers = ['Name', 'LRN', 'Birth Day', 'Current Height', 'Current Weight', 'Subject 1', 'Subject 2', 'Subject 3', 'Subject 4', 'Subject 5'];
 
     async function fetchData() {
       try {
@@ -120,26 +101,28 @@
         const text = await response.text();
         const rows = text.split('\n').map(row => row.split(','));
         pupilsData = rows.slice(1); // Skip header row
-        populateTable(pupilsData);
       } catch (error) {
         console.error('Error fetching ', error);
-        document.getElementById('table-body').innerHTML = `<tr><td colspan="10">${error.message}</td></tr>`;
+        document.getElementById('table-body').innerHTML = `<tr><td colspan="2">${error.message}</td></tr>`;
       }
     }
 
-    function populateTable(data) {
+    function populatePortraitTable(row) {
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = ''; // Clear existing rows
 
-      data.forEach(row => {
+      headers.forEach((header, index) => {
         const tr = document.createElement('tr');
-        row.forEach(cell => {
-          const td = document.createElement('td');
-          td.textContent = cell;
-          tr.appendChild(td);
-        });
+        const th = document.createElement('th');
+        th.textContent = header;
+        const td = document.createElement('td');
+        td.textContent = row[index];
+        tr.appendChild(th);
+        tr.appendChild(td);
         tbody.appendChild(tr);
       });
+
+      document.getElementById('data-table').classList.remove('hidden');
     }
 
     function filterSuggestions(query) {
@@ -164,7 +147,7 @@
     }
 
     function showPupilData(row) {
-      populateTable([row]); // Show only the selected pupil's data
+      populatePortraitTable(row); // Show the selected pupil's data in portrait format
       document.getElementById('suggestions').classList.add('hidden');
       document.getElementById('searchInput').value = ''; // Clear search input
     }
@@ -173,65 +156,6 @@
       filterSuggestions(event.target.value);
     });
 
-    window.onload = fetchData;
-  </script>
-</body>
-</html>
-  </style>
-</head>
-<body>
-  <h1>Sheet Data</h1>
-  <table id="data-table">
-    <thead><tr></tr></thead>
-    <tbody></tbody>
-  </table>
-
-  <script>
-    // Use the published CSV link directly
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXpGjabsmyLM0yQPC7LuxHQDWIKEX1PEN0OS6chnSx0RD7qosCEenIpOKfMUHGwKwxIO-DSKVq2MW-/pub?output=csv';
-
-    async function fetchData() {
-      try {
-        const response = await fetch(CSV_URL);
-        if (!response.ok) throw new Error('Failed to fetch data');
-        
-        const text = await response.text();
-        const data = text.split('\n').map(row => row.split(','));
-        
-        populateTable(data);
-      } catch (error) {
-        document.getElementById('data-table').innerHTML = 
-          `<tr><td colspan="10">${error.message}</td></tr>`;
-      }
-    }
-
-    function populateTable(data) {
-      const table = document.getElementById('data-table');
-      const headers = data[0];
-      const rows = data.slice(1);
-
-      // Create headers
-      const headerRow = table.querySelector('thead tr');
-      headers.forEach(header => {
-        const th = document.createElement('th');
-        th.textContent = header;
-        headerRow.appendChild(th);
-      });
-
-      // Create rows
-      const tbody = table.querySelector('tbody');
-      rows.forEach(rowData => {
-        const row = document.createElement('tr');
-        rowData.forEach(cell => {
-          const td = document.createElement('td');
-          td.textContent = cell;
-          row.appendChild(td);
-        });
-        tbody.appendChild(row);
-      });
-    }
-
-    // Start fetching data when page loads
     window.onload = fetchData;
   </script>
 </body>

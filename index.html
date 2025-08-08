@@ -67,26 +67,6 @@
     .hidden {
       display: none;
     }
-    .info-table {
-      margin: 20px auto;
-      max-width: 800px;
-      border-collapse: collapse;
-      background: #fff;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .info-table th, .info-table td {
-      border: 1px solid #ddd;
-      padding: 12px;
-      text-align: left;
-    }
-    .info-table th {
-      background-color: #2c3e50;
-      color: #fff;
-      width: 40%;
-    }
-    .info-table tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
   </style>
 </head>
 <body>
@@ -96,19 +76,7 @@
     <div id="suggestions" class="suggestions hidden"></div>
   </div>
   <div id="data-container" class="hidden">
-    <!-- Basic Information Table -->
-    <table id="info-table" class="info-table">
-      <thead>
-        <tr>
-          <th>Field</th>
-          <th>Value</th>
-        </tr>
-      </thead>
-      <tbody id="info-body">
-        <!-- Basic info rows will be dynamically populated -->
-      </tbody>
-    </table>
-    <!-- Grade-level tables will be dynamically added here -->
+    <!-- Grade-level tables will be dynamically populated here -->
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -116,8 +84,6 @@
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXpGjabsmyLM0yQPC7LuxHQDWIKEX1PEN0OS6chnSx0RD7qosCEenIpOKfMUHGwKwxIO-DSKVq2MW-/pub?output=csv';
 
     let pupilsData = [];
-    const gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 4', 'Grade 5', 'Grade 6'];
-    const basicFields = ['Name', 'LRN', 'Birth Day', 'Current Height', 'Current Weight'];
 
     async function fetchData() {
       try {
@@ -140,38 +106,29 @@
         console.log('Parsed Data:', pupilsData);
       } catch (error) {
         console.error('Error fetching ', error);
-        document.getElementById('data-container').innerHTML = `<p>${error.message}</p>`;
       }
-    }
-
-    function populateInfoTable(row) {
-      const tbody = document.getElementById('info-body');
-      tbody.innerHTML = ''; // Clear existing rows
-
-      basicFields.forEach(field => {
-        const tr = document.createElement('tr');
-        const th = document.createElement('th');
-        th.textContent = field;
-        const td = document.createElement('td');
-        td.textContent = row[field] || 'N/A';
-        tr.appendChild(th);
-        tr.appendChild(td);
-        tbody.appendChild(tr);
-      });
     }
 
     function populateGradeTables(row) {
       const container = document.getElementById('data-container');
       container.innerHTML = ''; // Clear existing content
 
-      // Add basic info table
-      populateInfoTable(row);
+      // Define grade levels and their corresponding subjects
+      const gradeLevels = [
+        { level: 'Kinder', startIdx: 5 },
+        { level: 'Grade 1', startIdx: 11 },
+        { level: 'Grade 2', startIdx: 17 },
+        { level: 'Grade 3', startIdx: 23 }, // Adjusted based on your header structure
+        { level: 'Grade 4', startIdx: 29 },
+        { level: 'Grade 5', startIdx: 35 },
+        { level: 'Grade 6', startIdx: 41 }
+      ];
 
-      gradeLevels.forEach(level => {
+      gradeLevels.forEach(({ level, startIdx }) => {
         const table = document.createElement('table');
         table.classList.add('grade-table');
 
-        // Create table headers
+        // Table headers
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
         const headers = ['Subject', '1st Quarter', '2nd Quarter', '3rd Quarter', '4th Quarter', 'Final Grade'];
@@ -183,28 +140,22 @@
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
-        // Create table body
+        // Table body
         const tbody = document.createElement('tbody');
-        for (let i = 1; i <= 5; i++) {
-          const subjectKey = `${level} Subject ${i}`;
-          const grades = row[subjectKey]?.split(',').map(g => g.trim()) || [];
+        for (let i = 0; i < 5; i++) { // 5 subjects per grade level
+          const subjectName = Object.keys(row)[startIdx + i];
+          const grades = row[subjectName].split(',').map(grade => grade.trim() || 'N/A');
 
           const tr = document.createElement('tr');
           const subjectCell = document.createElement('td');
-          subjectCell.textContent = `Subject ${i}`;
+          subjectCell.textContent = subjectName || 'N/A';
           tr.appendChild(subjectCell);
 
-          // Add quarter grades
-          for (let j = 0; j < 4; j++) {
+          grades.forEach(grade => {
             const td = document.createElement('td');
-            td.textContent = grades[j] || 'N/A';
+            td.textContent = grade;
             tr.appendChild(td);
-          }
-
-          // Add final grade
-          const finalGradeCell = document.createElement('td');
-          finalGradeCell.textContent = grades[4] || 'N/A';
-          tr.appendChild(finalGradeCell);
+          });
 
           tbody.appendChild(tr);
         }
@@ -242,7 +193,7 @@
     }
 
     function showPupilData(row) {
-      populateGradeTables(row); // Show the selected pupil's data grouped by grade level
+      populateGradeTables(row); // Show the selected pupil's data in grade-level tables
       document.getElementById('suggestions').classList.add('hidden');
       document.getElementById('searchInput').value = ''; // Clear search input
     }

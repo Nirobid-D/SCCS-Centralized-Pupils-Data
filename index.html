@@ -45,12 +45,21 @@
     .suggestions div:hover {
       background-color: #f0f0f0;
     }
-    .portrait-table {
+    .data-section {
       margin: 20px auto;
-      max-width: 600px;
-      border-collapse: collapse;
+      max-width: 800px;
       background: #fff;
+      padding: 20px;
+      border-radius: 5px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .data-section h2 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    .portrait-table {
+      width: 100%;
+      border-collapse: collapse;
     }
     .portrait-table th, .portrait-table td {
       border: 1px solid #ddd;
@@ -60,19 +69,12 @@
     .portrait-table th {
       background-color: #2c3e50;
       color: #fff;
-      width: 40%;
     }
     .portrait-table tr:nth-child(even) {
       background-color: #f2f2f2;
     }
     .hidden {
       display: none;
-    }
-    .grade-section {
-      margin-top: 30px;
-    }
-    .grade-section h2 {
-      color: #2c3e50;
     }
   </style>
 </head>
@@ -83,22 +85,22 @@
     <div id="suggestions" class="suggestions hidden"></div>
   </div>
 
-  <!-- General Information Table -->
-  <table id="general-info-table" class="portrait-table hidden">
-    <thead>
-      <tr>
-        <th>Field</th>
-        <th>Value</th>
-      </tr>
-    </thead>
-    <tbody id="general-info-body">
-      <!-- General info rows will be dynamically populated -->
-    </tbody>
-  </table>
+  <!-- General Information Section -->
+  <div id="general-info" class="data-section hidden">
+    <h2>General Information</h2>
+    <table class="portrait-table">
+      <tbody id="general-info-body">
+        <!-- Data rows will be dynamically populated -->
+      </tbody>
+    </table>
+  </div>
 
-  <!-- Grade-Level Tables -->
-  <div id="grade-levels" class="hidden">
-    <!-- Grade-level tables will be dynamically added here -->
+  <!-- Grade Level Sections -->
+  <div id="grade-levels" class="data-section hidden">
+    <h2>Grade Levels</h2>
+    <div id="grade-tables">
+      <!-- Grade tables will be dynamically populated -->
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -106,10 +108,8 @@
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXpGjabsmyLM0yQPC7LuxHQDWIKEX1PEN0OS6chnSx0RD7qosCEenIpOKfMUHGwKwxIO-DSKVq2MW-/pub?output=csv';
 
     let pupilsData = [];
-    const headers = [
-      'Name', 'LRN', 'Birth Day', 'Current Height', 'Current Weight',
-      'Kinder', 'Grade 1', 'Grade 2', 'Grade 4', 'Grade 5', 'Grade 6'
-    ];
+    const gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 4', 'Grade 5', 'Grade 6'];
+    const subjects = ['Subject 1', 'Subject 2', 'Subject 3', 'Subject 4', 'Subject 5'];
 
     async function fetchData() {
       try {
@@ -140,72 +140,81 @@
       const tbody = document.getElementById('general-info-body');
       tbody.innerHTML = ''; // Clear existing rows
 
-      const generalFields = ['Name', 'LRN', 'Birth Day', 'Current Height', 'Current Weight'];
-      generalFields.forEach(field => {
+      const fields = [
+        { label: 'Name', value: row.Name },
+        { label: 'LRN', value: row.LRN },
+        { label: 'Birth Day', value: row['Birth Day'] },
+        { label: 'Current Height', value: row['Current Height'] },
+        { label: 'Current Weight', value: row['Current Weight'] }
+      ];
+
+      fields.forEach(field => {
         const tr = document.createElement('tr');
         const th = document.createElement('th');
-        th.textContent = field;
+        th.textContent = field.label;
         const td = document.createElement('td');
-        td.textContent = row[field] || 'N/A'; // Handle missing data
+        td.textContent = field.value || 'N/A';
         tr.appendChild(th);
         tr.appendChild(td);
         tbody.appendChild(tr);
       });
 
-      document.getElementById('general-info-table').classList.remove('hidden');
+      document.getElementById('general-info').classList.remove('hidden');
     }
 
-    function populateGradeLevels(row) {
-      const gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 4', 'Grade 5', 'Grade 6'];
-      const gradeContainer = document.getElementById('grade-levels');
-      gradeContainer.innerHTML = ''; // Clear existing grade-level tables
+    function populateGradeTables(row) {
+      const gradeTablesContainer = document.getElementById('grade-tables');
+      gradeTablesContainer.innerHTML = ''; // Clear existing tables
 
-      gradeLevels.forEach(level => {
-        if (row[level]) {
-          const subjects = row[level].split(',').map(subject => subject.trim());
-          if (subjects.length > 0) {
-            // Create a new table for this grade level
-            const sectionDiv = document.createElement('div');
-            sectionDiv.classList.add('grade-section');
+      gradeLevels.forEach((level, index) => {
+        const table = document.createElement('table');
+        table.classList.add('portrait-table');
 
-            const h2 = document.createElement('h2');
-            h2.textContent = level;
-            sectionDiv.appendChild(h2);
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const headers = ['Subject', 'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4', 'Final Grade'];
+        headers.forEach(header => {
+          const th = document.createElement('th');
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
 
-            const table = document.createElement('table');
-            table.classList.add('portrait-table');
+        const tbody = document.createElement('tbody');
+        subjects.forEach(subject => {
+          const tr = document.createElement('tr');
+          const tdSubject = document.createElement('td');
+          tdSubject.textContent = subject;
 
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
-            const thSubject = document.createElement('th');
-            thSubject.textContent = 'Subject';
-            const thGrade = document.createElement('th');
-            thGrade.textContent = 'Grade';
-            headerRow.appendChild(thSubject);
-            headerRow.appendChild(thGrade);
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-
-            const tbody = document.createElement('tbody');
-            subjects.forEach((subject, index) => {
-              const tr = document.createElement('tr');
-              const tdSubject = document.createElement('td');
-              tdSubject.textContent = `Subject ${index + 1}`;
-              const tdGrade = document.createElement('td');
-              tdGrade.textContent = subject;
-              tr.appendChild(tdSubject);
-              tr.appendChild(tdGrade);
-              tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-
-            sectionDiv.appendChild(table);
-            gradeContainer.appendChild(sectionDiv);
+          const grades = row[`${subject}`]?.split(',') || [];
+          for (let i = 0; i < 5; i++) {
+            const tdGrade = document.createElement('td');
+            tdGrade.textContent = grades[i] || 'N/A';
+            tr.appendChild(tdGrade);
           }
-        }
+
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        const section = document.createElement('div');
+        section.classList.add('data-section');
+        const title = document.createElement('h3');
+        title.textContent = `${level}`;
+        section.appendChild(title);
+        section.appendChild(table);
+        gradeTablesContainer.appendChild(section);
       });
 
       document.getElementById('grade-levels').classList.remove('hidden');
+    }
+
+    function showPupilData(row) {
+      populateGeneralInfo(row); // Populate general information
+      populateGradeTables(row); // Populate grade tables
+      document.getElementById('suggestions').classList.add('hidden');
+      document.getElementById('searchInput').value = ''; // Clear search input
     }
 
     function filterSuggestions(query) {
@@ -227,13 +236,6 @@
       } else {
         suggestionsDiv.classList.add('hidden');
       }
-    }
-
-    function showPupilData(row) {
-      populateGeneralInfo(row); // Show general information
-      populateGradeLevels(row); // Show grade-level tables
-      document.getElementById('suggestions').classList.add('hidden');
-      document.getElementById('searchInput').value = ''; // Clear search input
     }
 
     document.getElementById('searchInput').addEventListener('input', (event) => {

@@ -67,6 +67,26 @@
     .hidden {
       display: none;
     }
+    .info-table {
+      margin: 20px auto;
+      max-width: 800px;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .info-table th, .info-table td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    .info-table th {
+      background-color: #2c3e50;
+      color: #fff;
+      width: 40%;
+    }
+    .info-table tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
   </style>
 </head>
 <body>
@@ -76,6 +96,18 @@
     <div id="suggestions" class="suggestions hidden"></div>
   </div>
   <div id="data-container" class="hidden">
+    <!-- Basic Information Table -->
+    <table id="info-table" class="info-table">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody id="info-body">
+        <!-- Basic info rows will be dynamically populated -->
+      </tbody>
+    </table>
     <!-- Grade-level tables will be dynamically added here -->
   </div>
 
@@ -85,6 +117,7 @@
 
     let pupilsData = [];
     const gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 4', 'Grade 5', 'Grade 6'];
+    const basicFields = ['Name', 'LRN', 'Birth Day', 'Current Height', 'Current Weight'];
 
     async function fetchData() {
       try {
@@ -111,9 +144,28 @@
       }
     }
 
+    function populateInfoTable(row) {
+      const tbody = document.getElementById('info-body');
+      tbody.innerHTML = ''; // Clear existing rows
+
+      basicFields.forEach(field => {
+        const tr = document.createElement('tr');
+        const th = document.createElement('th');
+        th.textContent = field;
+        const td = document.createElement('td');
+        td.textContent = row[field] || 'N/A';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+      });
+    }
+
     function populateGradeTables(row) {
       const container = document.getElementById('data-container');
       container.innerHTML = ''; // Clear existing content
+
+      // Add basic info table
+      populateInfoTable(row);
 
       gradeLevels.forEach(level => {
         const table = document.createElement('table');

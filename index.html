@@ -171,7 +171,16 @@
           const td = document.createElement('td');
           const subjectKey = `${grade} ${subject}`; // Construct key
           console.log('Looking for key:', subjectKey); // Debugging: Log the key being searched
-          td.textContent = row[subjectKey] || 'N/A'; // Use 'N/A' if data is missing
+
+          // Split the subject data into individual scores
+          const subjectData = row[subjectKey];
+          if (subjectData) {
+            const scores = subjectData.split(',').filter(score => score.trim() !== '');
+            td.textContent = scores.join(', ') || 'N/A'; // Join scores with a comma
+          } else {
+            td.textContent = 'N/A'; // Handle missing data
+          }
+
           dataRow.appendChild(td);
         });
         tbody.appendChild(dataRow);

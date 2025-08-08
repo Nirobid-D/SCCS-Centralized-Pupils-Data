@@ -45,27 +45,34 @@
     .suggestions div:hover {
       background-color: #f0f0f0;
     }
-    .grade-table {
+    .portrait-table {
       margin: 20px auto;
       max-width: 600px;
       border-collapse: collapse;
       background: #fff;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    .grade-table th, .grade-table td {
+    .portrait-table th, .portrait-table td {
       border: 1px solid #ddd;
       padding: 12px;
       text-align: left;
     }
-    .grade-table th {
+    .portrait-table th {
       background-color: #2c3e50;
       color: #fff;
+      width: 40%;
     }
-    .grade-table tr:nth-child(even) {
+    .portrait-table tr:nth-child(even) {
       background-color: #f2f2f2;
     }
     .hidden {
       display: none;
+    }
+    .grade-section {
+      margin-top: 30px;
+    }
+    .grade-section h2 {
+      color: #2c3e50;
     }
   </style>
 </head>
@@ -75,9 +82,23 @@
     <input type="text" id="searchInput" placeholder="Search by Name or LRN..." />
     <div id="suggestions" class="suggestions hidden"></div>
   </div>
-  <div id="data-container" class="hidden">
-    <h2 id="pupil-name"></h2>
-    <div id="grade-tables"></div>
+
+  <!-- General Information Table -->
+  <table id="general-info-table" class="portrait-table hidden">
+    <thead>
+      <tr>
+        <th>Field</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody id="general-info-body">
+      <!-- General info rows will be dynamically populated -->
+    </tbody>
+  </table>
+
+  <!-- Grade-Level Tables -->
+  <div id="grade-levels" class="hidden">
+    <!-- Grade-level tables will be dynamically added here -->
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -86,41 +107,8 @@
 
     let pupilsData = [];
     const headers = [
-      { key: 'Name', label: 'Name' },
-      { key: 'LRN', label: 'LRN' },
-      { key: 'Birth Day', label: 'Birth Day' },
-      { key: 'Current Height', label: 'Current Height' },
-      { key: 'Current Weight', label: 'Current Weight' },
-      { key: 'Kinder_Subject_1', label: 'Subject 1' },
-      { key: 'Kinder_Subject_2', label: 'Subject 2' },
-      { key: 'Kinder_Subject_3', label: 'Subject 3' },
-      { key: 'Kinder_Subject_4', label: 'Subject 4' },
-      { key: 'Kinder_Subject_5', label: 'Subject 5' },
-      { key: 'Grade_1_Subject_1', label: 'Subject 1' },
-      { key: 'Grade_1_Subject_2', label: 'Subject 2' },
-      { key: 'Grade_1_Subject_3', label: 'Subject 3' },
-      { key: 'Grade_1_Subject_4', label: 'Subject 4' },
-      { key: 'Grade_1_Subject_5', label: 'Subject 5' },
-      { key: 'Grade_2_Subject_1', label: 'Subject 1' },
-      { key: 'Grade_2_Subject_2', label: 'Subject 2' },
-      { key: 'Grade_2_Subject_3', label: 'Subject 3' },
-      { key: 'Grade_2_Subject_4', label: 'Subject 4' },
-      { key: 'Grade_2_Subject_5', label: 'Subject 5' },
-      { key: 'Grade_4_Subject_1', label: 'Subject 1' },
-      { key: 'Grade_4_Subject_2', label: 'Subject 2' },
-      { key: 'Grade_4_Subject_3', label: 'Subject 3' },
-      { key: 'Grade_4_Subject_4', label: 'Subject 4' },
-      { key: 'Grade_4_Subject_5', label: 'Subject 5' },
-      { key: 'Grade_5_Subject_1', label: 'Subject 1' },
-      { key: 'Grade_5_Subject_2', label: 'Subject 2' },
-      { key: 'Grade_5_Subject_3', label: 'Subject 3' },
-      { key: 'Grade_5_Subject_4', label: 'Subject 4' },
-      { key: 'Grade_5_Subject_5', label: 'Subject 5' },
-      { key: 'Grade_6_Subject_1', label: 'Subject 1' },
-      { key: 'Grade_6_Subject_2', label: 'Subject 2' },
-      { key: 'Grade_6_Subject_3', label: 'Subject 3' },
-      { key: 'Grade_6_Subject_4', label: 'Subject 4' },
-      { key: 'Grade_6_Subject_5', label: 'Subject 5' }
+      'Name', 'LRN', 'Birth Day', 'Current Height', 'Current Weight',
+      'Kinder', 'Grade 1', 'Grade 2', 'Grade 4', 'Grade 5', 'Grade 6'
     ];
 
     async function fetchData() {
@@ -144,61 +132,86 @@
         console.log('Parsed Data:', pupilsData);
       } catch (error) {
         console.error('Error fetching ', error);
-        document.getElementById('grade-tables').innerHTML = `<p>${error.message}</p>`;
+        document.getElementById('general-info-body').innerHTML = `<tr><td colspan="2">${error.message}</td></tr>`;
       }
     }
 
-    function populateGradeTables(row) {
-      const container = document.getElementById('grade-tables');
-      container.innerHTML = ''; // Clear existing tables
+    function populateGeneralInfo(row) {
+      const tbody = document.getElementById('general-info-body');
+      tbody.innerHTML = ''; // Clear existing rows
 
-      const gradeLevels = [
-        { label: 'Kinder', keys: ['Kinder_Subject_1', 'Kinder_Subject_2', 'Kinder_Subject_3', 'Kinder_Subject_4', 'Kinder_Subject_5'] },
-        { label: 'Grade 1', keys: ['Grade_1_Subject_1', 'Grade_1_Subject_2', 'Grade_1_Subject_3', 'Grade_1_Subject_4', 'Grade_1_Subject_5'] },
-        { label: 'Grade 2', keys: ['Grade_2_Subject_1', 'Grade_2_Subject_2', 'Grade_2_Subject_3', 'Grade_2_Subject_4', 'Grade_2_Subject_5'] },
-        { label: 'Grade 4', keys: ['Grade_4_Subject_1', 'Grade_4_Subject_2', 'Grade_4_Subject_3', 'Grade_4_Subject_4', 'Grade_4_Subject_5'] },
-        { label: 'Grade 5', keys: ['Grade_5_Subject_1', 'Grade_5_Subject_2', 'Grade_5_Subject_3', 'Grade_5_Subject_4', 'Grade_5_Subject_5'] },
-        { label: 'Grade 6', keys: ['Grade_6_Subject_1', 'Grade_6_Subject_2', 'Grade_6_Subject_3', 'Grade_6_Subject_4', 'Grade_6_Subject_5'] }
-      ];
-
-      gradeLevels.forEach(({ label, keys }) => {
-        const table = document.createElement('table');
-        table.classList.add('grade-table');
-
-        // Create table header
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
+      const generalFields = ['Name', 'LRN', 'Birth Day', 'Current Height', 'Current Weight'];
+      generalFields.forEach(field => {
+        const tr = document.createElement('tr');
         const th = document.createElement('th');
-        th.colSpan = 2;
-        th.textContent = label;
-        headerRow.appendChild(th);
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
-
-        // Create table body
-        const tbody = document.createElement('tbody');
-        keys.forEach(key => {
-          const tr = document.createElement('tr');
-          const th = document.createElement('th');
-          th.textContent = headers.find(h => h.key === key)?.label || key;
-          const td = document.createElement('td');
-          td.textContent = row[key] || 'N/A';
-          tr.appendChild(th);
-          tr.appendChild(td);
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-
-        container.appendChild(table);
+        th.textContent = field;
+        const td = document.createElement('td');
+        td.textContent = row[field] || 'N/A'; // Handle missing data
+        tr.appendChild(th);
+        tr.appendChild(td);
+        tbody.appendChild(tr);
       });
 
-      document.getElementById('data-container').classList.remove('hidden');
+      document.getElementById('general-info-table').classList.remove('hidden');
+    }
+
+    function populateGradeLevels(row) {
+      const gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 4', 'Grade 5', 'Grade 6'];
+      const gradeContainer = document.getElementById('grade-levels');
+      gradeContainer.innerHTML = ''; // Clear existing grade-level tables
+
+      gradeLevels.forEach(level => {
+        if (row[level]) {
+          const subjects = row[level].split(',').map(subject => subject.trim());
+          if (subjects.length > 0) {
+            // Create a new table for this grade level
+            const sectionDiv = document.createElement('div');
+            sectionDiv.classList.add('grade-section');
+
+            const h2 = document.createElement('h2');
+            h2.textContent = level;
+            sectionDiv.appendChild(h2);
+
+            const table = document.createElement('table');
+            table.classList.add('portrait-table');
+
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            const thSubject = document.createElement('th');
+            thSubject.textContent = 'Subject';
+            const thGrade = document.createElement('th');
+            thGrade.textContent = 'Grade';
+            headerRow.appendChild(thSubject);
+            headerRow.appendChild(thGrade);
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            subjects.forEach((subject, index) => {
+              const tr = document.createElement('tr');
+              const tdSubject = document.createElement('td');
+              tdSubject.textContent = `Subject ${index + 1}`;
+              const tdGrade = document.createElement('td');
+              tdGrade.textContent = subject;
+              tr.appendChild(tdSubject);
+              tr.appendChild(tdGrade);
+              tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            sectionDiv.appendChild(table);
+            gradeContainer.appendChild(sectionDiv);
+          }
+        }
+      });
+
+      document.getElementById('grade-levels').classList.remove('hidden');
     }
 
     function filterSuggestions(query) {
       const suggestions = pupilsData.filter(row =>
-        row.Name.toLowerCase().includes(query.toLowerCase()) ||
-        row.LRN.toLowerCase().includes(query.toLowerCase())
+        row.Name.toLowerCase().includes(query.toLowerCase()) || // Match by Name
+        row.LRN.toLowerCase().includes(query.toLowerCase())     // Match by LRN
       );
 
       const suggestionsDiv = document.getElementById('suggestions');
@@ -217,8 +230,8 @@
     }
 
     function showPupilData(row) {
-      document.getElementById('pupil-name').textContent = `Pupil: ${row.Name}`;
-      populateGradeTables(row); // Show grade-level tables
+      populateGeneralInfo(row); // Show general information
+      populateGradeLevels(row); // Show grade-level tables
       document.getElementById('suggestions').classList.add('hidden');
       document.getElementById('searchInput').value = ''; // Clear search input
     }

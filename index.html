@@ -45,24 +45,23 @@
     .suggestions div:hover {
       background-color: #f0f0f0;
     }
-    .portrait-table {
+    .grade-table {
       margin: 20px auto;
-      max-width: 600px;
+      max-width: 800px;
       border-collapse: collapse;
       background: #fff;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    .portrait-table th, .portrait-table td {
+    .grade-table th, .grade-table td {
       border: 1px solid #ddd;
       padding: 12px;
       text-align: left;
     }
-    .portrait-table th {
+    .grade-table th {
       background-color: #2c3e50;
       color: #fff;
-      width: 40%;
     }
-    .portrait-table tr:nth-child(even) {
+    .grade-table tr:nth-child(even) {
       background-color: #f2f2f2;
     }
     .hidden {
@@ -76,24 +75,16 @@
     <input type="text" id="searchInput" placeholder="Search by Name or LRN..." />
     <div id="suggestions" class="suggestions hidden"></div>
   </div>
-  <table id="data-table" class="portrait-table hidden">
-    <thead>
-      <tr>
-        <th>Field</th>
-        <th>Value</th>
-      </tr>
-    </thead>
-    <tbody id="table-body">
-      <!-- Data rows will be dynamically populated -->
-    </tbody>
-  </table>
+  <div id="data-container" class="hidden">
+    <!-- Grade-level tables will be dynamically added here -->
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script>
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXpGjabsmyLM0yQPC7LuxHQDWIKEX1PEN0OS6chnSx0RD7qosCEenIpOKfMUHGwKwxIO-DSKVq2MW-/pub?output=csv';
 
     let pupilsData = [];
-    const headers = ['Name', 'LRN', 'Birth Day', 'Current Height', 'Current Weight', 'Subject 1', 'Subject 2', 'Subject 3', 'Subject 4', 'Subject 5'];
+    const gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 4', 'Grade 5', 'Grade 6'];
 
     async function fetchData() {
       try {
@@ -116,26 +107,65 @@
         console.log('Parsed Data:', pupilsData);
       } catch (error) {
         console.error('Error fetching ', error);
-        document.getElementById('table-body').innerHTML = `<tr><td colspan="2">${error.message}</td></tr>`;
+        document.getElementById('data-container').innerHTML = `<p>${error.message}</p>`;
       }
     }
 
-    function populatePortraitTable(row) {
-      const tbody = document.getElementById('table-body');
-      tbody.innerHTML = ''; // Clear existing rows
+    function populateGradeTables(row) {
+      const container = document.getElementById('data-container');
+      container.innerHTML = ''; // Clear existing content
 
-      headers.forEach(header => {
-        const tr = document.createElement('tr');
-        const th = document.createElement('th');
-        th.textContent = header;
-        const td = document.createElement('td');
-        td.textContent = row[header] || 'N/A'; // Handle missing data
-        tr.appendChild(th);
-        tr.appendChild(td);
-        tbody.appendChild(tr);
+      gradeLevels.forEach(level => {
+        const table = document.createElement('table');
+        table.classList.add('grade-table');
+
+        // Create table headers
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const headers = ['Subject', '1st Quarter', '2nd Quarter', '3rd Quarter', '4th Quarter', 'Final Grade'];
+        headers.forEach(header => {
+          const th = document.createElement('th');
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Create table body
+        const tbody = document.createElement('tbody');
+        for (let i = 1; i <= 5; i++) {
+          const subjectKey = `${level} Subject ${i}`;
+          const grades = row[subjectKey]?.split(',').map(g => g.trim()) || [];
+
+          const tr = document.createElement('tr');
+          const subjectCell = document.createElement('td');
+          subjectCell.textContent = `Subject ${i}`;
+          tr.appendChild(subjectCell);
+
+          // Add quarter grades
+          for (let j = 0; j < 4; j++) {
+            const td = document.createElement('td');
+            td.textContent = grades[j] || 'N/A';
+            tr.appendChild(td);
+          }
+
+          // Add final grade
+          const finalGradeCell = document.createElement('td');
+          finalGradeCell.textContent = grades[4] || 'N/A';
+          tr.appendChild(finalGradeCell);
+
+          tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+
+        // Add a title for the grade level
+        const title = document.createElement('h3');
+        title.textContent = level;
+        container.appendChild(title);
+        container.appendChild(table);
       });
 
-      document.getElementById('data-table').classList.remove('hidden');
+      container.classList.remove('hidden');
     }
 
     function filterSuggestions(query) {
@@ -160,7 +190,7 @@
     }
 
     function showPupilData(row) {
-      populatePortraitTable(row); // Show the selected pupil's data in portrait format
+      populateGradeTables(row); // Show the selected pupil's data grouped by grade level
       document.getElementById('suggestions').classList.add('hidden');
       document.getElementById('searchInput').value = ''; // Clear search input
     }

@@ -90,7 +90,7 @@
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXpGjabsmyLM0yQPC7LuxHQDWIKEX1PEN0OS6chnSx0RD7qosCEenIpOKfMUHGwKwxIO-DSKVq2MW-/pub?output=csv';
 
     let pupilsData = [];
-    const gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
+    const gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 4', 'Grade 5', 'Grade 6'];
     const subjects = ['Subject 1', 'Subject 2', 'Subject 3', 'Subject 4', 'Subject 5'];
 
     async function fetchData() {
@@ -143,7 +143,7 @@
       container.appendChild(generalTable);
 
       // Grade Level Tables
-      gradeLevels.forEach(grade => {
+      gradeLevels.forEach((grade, gradeIndex) => {
         const header = document.createElement('div');
         header.classList.add('grade-header');
         header.textContent = grade;
@@ -167,12 +167,14 @@
 
         // Add data rows
         const dataRow = document.createElement('tr');
-        subjects.forEach(subject => {
+        subjects.forEach((subject, subjectIndex) => {
           const td = document.createElement('td');
-          const subjectKey = `${grade} ${subject}`; // Construct key
-          console.log('Looking for key:', subjectKey); // Debugging: Log the key being searched
 
-          // Split the subject data into individual scores
+          // Calculate the index of the subject in the flattened structure
+          const subjectKeyIndex = gradeIndex * subjects.length + subjectIndex;
+          const subjectKey = Object.keys(row)[5 + subjectKeyIndex]; // Start from index 5 (after general fields)
+
+          // Get and split the subject data
           const subjectData = row[subjectKey];
           if (subjectData) {
             const scores = subjectData.split(',').filter(score => score.trim() !== '');
